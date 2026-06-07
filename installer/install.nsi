@@ -11,6 +11,18 @@ ShowInstDetails show
 
 !include LogicLib.nsh
 
+Section "-PreInstall"
+  DetailPrint "Removing blocking registry keys (GE-Proton workaround)..."
+  ExecWait '"$WINDIR\regedit.exe" /S /D "HKLM\Software\Wow6432Node\Microsoft\NET Framework Setup\NDP\v4"' $0
+  ExecWait '"$WINDIR\regedit.exe" /S /D "HKLM\Software\Wow6432Node\Microsoft\.NETFramework"' $0
+  ExecWait '"$WINDIR\regedit.exe" /S /D "HKLM\Software\Microsoft\NET Framework Setup\NDP\v4"' $0
+
+  ; Remove existing mscoree.dll symlinks (Proton)
+  DetailPrint "Removing existing mscoree.dll..."
+  Delete "$WINDIR\system32\mscoree.dll"
+  Delete "$WINDIR\syswow64\mscoree.dll"
+SectionEnd
+
 Section "Extract .NET Framework 4.8"
   SetOutPath "$TEMP\dotnet48-installer"
   
@@ -44,11 +56,16 @@ Section "Import Registry"
   ${EndIf}
 SectionEnd
 
-Section "Done"
+Section "-PostInstall"
   DetailPrint ""
   DetailPrint "========================================"
   DetailPrint ".NET Framework 4.8 installation complete!"
   DetailPrint "========================================"
   DetailPrint "Target: $WINDIR"
+  DetailPrint ""
+  DetailPrint "Se mscoree.dll nao foi copiado (Proton read-only):"
+  DetailPrint "  cp -RLv mscoree.dll \$WINEPREFIX/drive_c/windows/system32/"
+  DetailPrint "  cp -RLv mscoree.dll \$WINEPREFIX/drive_c/windows/syswow64/"
+  DetailPrint ""
   MessageBox MB_OK ".NET Framework 4.8 installed!"
 SectionEnd
